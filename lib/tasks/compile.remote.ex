@@ -34,10 +34,7 @@ defmodule Mix.Tasks.Compile.Remote do
       System.cmd(
         "ssh",
         [remote,
-         ~s(bash -lc 'source ~/.bashrc >/dev/null 2>&1; \
-                       source ~/.profile >/dev/null 2>&1; \
-                       if [ -f ~/.asdf/asdf.sh ]; then source ~/.asdf/asdf.sh; fi; \
-                       command -v mix')],
+         ~s(bash -lc '#{universal_source()} command -v mix')],
         stderr_to_stdout: true
       )
 
@@ -47,7 +44,7 @@ defmodule Mix.Tasks.Compile.Remote do
       Mix.shell().error("""
       Could not find 'mix' on remote host #{remote}.
       Make sure Elixir is installed and available in your PATH,
-      and that ~/.bashrc, ~/.profile, or ~/.asdf/asdf.sh load it correctly.
+      and that shell config files load it correctly.
       """)
       exit({:shutdown, 1})
     end
@@ -56,9 +53,7 @@ defmodule Mix.Tasks.Compile.Remote do
     IO.puts("Syncing deps on remote...")
     remote_deps_cmd = """
     ssh #{remote} 'bash -lc "\
-    source ~/.bashrc >/dev/null 2>&1; \
-    source ~/.profile >/dev/null 2>&1; \
-    if [ -f ~/.asdf/asdf.sh ]; then source ~/.asdf/asdf.sh; fi; \
+    #{universal_source()} \
     mkdir -p #{remote_path}/deps; \
     cd #{remote_path} && \
     MIX_ENV=#{env} #{remote_mix_path} deps.get in_remote"'
@@ -72,7 +67,15 @@ defmodule Mix.Tasks.Compile.Remote do
 
     # 5. Run remote compilation (always show remote compile output, hide SSH command line)
     IO.puts("Running remote compilation...")
-    run_stream_cmd(remote_compile_cmd(remote, remote_path, env, remote_mix_path), false)
+    remote_compile_cmd = """
+    ssh #{remote} 'bash -lc "\
+    #{universal_source()} \
+    mkdir -p #{remote_path}/_build; \
+    cd #{remote_path} && \
+    MIX_ENV=#{env} #{remote_mix_path} compile in_remote"'
+    """
+
+    run_stream_cmd(remote_compile_cmd, verbose)
 
     # 6. Sync build artifacts back
     IO.puts("Syncing build artifacts...")
@@ -83,18 +86,6 @@ defmodule Mix.Tasks.Compile.Remote do
     Enum.each(manifests, &File.touch!(&1, :os.system_time(:second)))
 
     {:ok, []}
-  end
-
-  defp remote_compile_cmd(remote, remote_path, env, remote_mix_path) do
-    """
-    ssh #{remote} 'bash -lc "\
-    source ~/.bashrc >/dev/null 2>&1; \
-    source ~/.profile >/dev/null 2>&1; \
-    if [ -f ~/.asdf/asdf.sh ]; then source ~/.asdf/asdf.sh; fi; \
-    mkdir -p #{remote_path}/_build; \
-    cd #{remote_path} && \
-    MIX_ENV=#{env} #{remote_mix_path} compile in_remote"'
-    """
   end
 
   # Run a command and wait for it
@@ -129,5 +120,17 @@ defmodule Mix.Tasks.Compile.Remote do
         Mix.shell().error("Remote command failed with status #{status}")
         exit({:shutdown, 1})
     end
+  end
+
+  # Universal shell source block for Bash/Zsh on Linux/macOS
+  defp universal_source do
+    """
+    [ -f ~/.bashrc ] && source ~/.bashrc >/dev/null 2>&1; \
+    [ -f ~/.bash_profile ] && source ~/.bash_profile >/dev/null 2>&1; \
+    [ -f ~/.profile ] && source ~/.profile >/dev/null 2>&1; \
+    [ -f ~/.zshrc ] && source ~/.zshrc >/dev/null 2>&1; \
+    [ -f ~/.zprofile ] && source ~/.zprofile >/dev/null 2>&1; \
+    [ -f ~/.asdf/asdf.sh ] && source ~/.asdf/asdf.sh >/dev/null 2>&1
+    """
   end
 end
