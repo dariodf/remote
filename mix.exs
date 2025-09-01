@@ -4,10 +4,13 @@ defmodule Remote.MixProject do
   def project do
     [
       app: :remote,
+      description: "Compile project remotely and sync back build artifacts.",
       version: "0.1.0",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      docs: docs(),
+      package: package(),
       dialyzer: [plt_add_apps: [:mix]]
     ]
   end
@@ -16,6 +19,24 @@ defmodule Remote.MixProject do
   def application do
     [
       extra_applications: [:logger]
+    ]
+  end
+
+  defp docs do
+    [
+      source_ref: "v#{@version}",
+      main: "readme",
+      source_url: "https://github.com/dariodf/remote",
+      extras: ["README.md"]
+    ]
+  end
+
+  defp package do
+    [
+      files: ~w(lib test mix.exs README.md LICENSE),
+      maintainers: ["dariodf"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/dariodf/remote"}
     ]
   end
 
