@@ -80,13 +80,16 @@ defmodule Remote.Adapters.SSH do
     %{host: host, path: path} = config()
     rsync_flags = flags(opts)
 
-  run_cmd("rsync -azh --delete #{rsync_flags} \
+    run_cmd(
+      "rsync -azh --delete #{rsync_flags} \
     --include='_build/' \
     --include='deps/' \
     --include='node_modules/' \
     --include='priv/static/' \
     --exclude='*' \
-    #{host}:#{path}/ #{local}", opts)
+    #{host}:#{path}/ #{local}",
+      opts
+    )
   end
 
   # --- helpers ---
@@ -97,7 +100,9 @@ defmodule Remote.Adapters.SSH do
     if opts[:verbose], do: IO.puts("Running: #{cmd}")
 
     case System.cmd("sh", ["-c", cmd], stderr_to_stdout: true) do
-      {_, 0} -> :ok
+      {_, 0} ->
+        :ok
+
       {out, status} ->
         Mix.shell().error("Command failed (#{status}): #{cmd}\n#{out}")
         exit({:shutdown, 1})
@@ -116,7 +121,8 @@ defmodule Remote.Adapters.SSH do
         IO.write(data)
         stream(port)
 
-      {^port, {:exit_status, 0}} -> :ok
+      {^port, {:exit_status, 0}} ->
+        :ok
 
       {^port, {:exit_status, status}} ->
         Mix.shell().error("Remote command failed with status #{status}")
@@ -126,9 +132,12 @@ defmodule Remote.Adapters.SSH do
 
   defp remote_mix_path(host) do
     {out, status} =
-      System.cmd("ssh", [host, ~s(bash -lc '#{universal_source()} command -v mix')], stderr_to_stdout: true)
+      System.cmd("ssh", [host, ~s(bash -lc '#{universal_source()} command -v mix')],
+        stderr_to_stdout: true
+      )
 
     path = String.trim(out)
+
     if status != 0 or path == "" do
       Mix.raise("Could not find 'mix' on remote host #{host}. Check PATH and shell configs.")
     end

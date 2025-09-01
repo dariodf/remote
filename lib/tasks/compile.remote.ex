@@ -1,11 +1,17 @@
 defmodule Mix.Tasks.Compile.Remote do
+  @moduledoc """
+  Compiler task that uploads, runs compilation remotely and
+  downloads the compiled code back into the local environment.
+  """
   use Mix.Task.Compiler
 
   @shortdoc "Compile project remotely and sync back build artifacts"
 
   @impl true
   def run(args) do
-    {opts, _args, _} = OptionParser.parse(args, switches: [verbose: :boolean], aliases: [v: :verbose])
+    {opts, _args, _} =
+      OptionParser.parse(args, switches: [verbose: :boolean], aliases: [v: :verbose])
+
     verbose = opts[:verbose] || false
 
     case args do
