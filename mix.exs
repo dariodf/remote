@@ -4,16 +4,12 @@ defmodule Remote.MixProject do
   def project do
     [
       app: :remote,
-      compilers: [:remote] ++ Mix.compilers(),
       version: "0.1.0",
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
   end
-
-  # Ensure that the task file is compiled so Elixir can actually run the [:remote] compiler
-  Code.compile_file("./lib/tasks/compile.remote.ex")
 
   # Run "mix help compile.app" to learn about applications.
   def application do
@@ -25,8 +21,10 @@ defmodule Remote.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:mox, "~> 1.0", only: :test}
     ]
   end
 end
