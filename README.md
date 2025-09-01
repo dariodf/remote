@@ -1,6 +1,6 @@
 # Remote
 
-Enables remote compiling for libraries.
+Compiles your project remotely and syncs back build artifacts.
 
 ## Installation
 
@@ -14,3 +14,7 @@ def deps do
   ]
 end
 ```
+
+## Usage
+
+Remote uses the SSH adapter as default. Check how to config in [docs](https://hexdocs.pm/remote/Remote.Adapters.SSH.html).
